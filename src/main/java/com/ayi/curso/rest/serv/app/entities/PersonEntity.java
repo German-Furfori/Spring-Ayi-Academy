@@ -42,4 +42,12 @@ public class PersonEntity implements Serializable {
     @Column(name = "fec_modificacion")
     private LocalDate dateModified;
 
+    public PersonEntity(String firstName, String lastName, String typeDocument, Integer numberDocument, LocalDate dateBorn) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.typeDocument = typeDocument;
+        this.numberDocument = numberDocument;
+        this.dateBorn = dateBorn;
+        this.dateCreated = LocalDate.now();
+    }
 }

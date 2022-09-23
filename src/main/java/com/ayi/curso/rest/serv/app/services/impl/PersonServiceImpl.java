@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -85,5 +86,37 @@ public class PersonServiceImpl implements IPersonService {
                 .collect(Collectors.toList());
 
         return personResponseDTOs;
+    }
+
+    @Override
+    public PersonResponseDTO addPerson(PersonDTO personDTO) {
+        PersonResponseDTO personResponseDTO;
+
+        PersonEntity entity = new PersonEntity(
+                personDTO.getFirstName(),
+                personDTO.getLastName(),
+                personDTO.getTypeDocument(),
+                personDTO.getNumberDocument(),
+                personDTO.getDateBorn()
+        );
+
+        personRepository.save(entity);
+
+        personResponseDTO = personMapper.entityToDto(entity);
+        return personResponseDTO;
+    }
+
+    @Override
+    public PersonResponseDTO removePersonById(Long id) {
+        Optional<PersonEntity> entity = personRepository.findById(id);
+        PersonResponseDTO personResponseDTO;
+
+        if(entity.isPresent()) {
+            personRepository.deleteById(id);
+            personResponseDTO = personMapper.entityToDto(entity.get());
+            return personResponseDTO;
+        } else {
+            throw new RuntimeException("No se encuentra el ID a borrar");
+        }
     }
 }

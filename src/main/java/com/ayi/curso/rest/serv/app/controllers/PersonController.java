@@ -1,5 +1,6 @@
 package com.ayi.curso.rest.serv.app.controllers;
 
+import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
 import com.ayi.curso.rest.serv.app.services.IPersonService;
 import io.swagger.annotations.*;
@@ -9,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @AllArgsConstructor
@@ -96,9 +98,53 @@ public class PersonController { // La puerta de entrada al endpoint
             @ApiParam(name = "firstName", required = true, value = "Person Name")
             @PathVariable("firstName") String firstName,
             @ApiParam(name = "lastName", required = true, value = "Person Last Name")
-            @PathVariable("lastName") String lastName) { // este "id" es lo que está entre llaves en el getmapping {id}
+            @PathVariable("lastName") String lastName) {
 
         List<PersonResponseDTO> personResponseDTOs = personService.findPersonByName(firstName, lastName);
         return ResponseEntity.ok(personResponseDTOs);
+    }
+
+    @DeleteMapping(
+            value = "/deleteById/{id}"
+    )
+    @ApiOperation(
+            value = "Retrieves data associated to List Master by Id",
+            httpMethod = "DELETE",
+            response = PersonResponseDTO.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "Body content with basic information for this Lists Master by Id"
+            ),
+            @ApiResponse(
+                    code = 400,
+                    message = "Describes errors on invalid payload received, e.g: missing fields, invalid data formats, etc.")
+    })
+    public ResponseEntity<PersonResponseDTO> deletePersonById(
+            @ApiParam(name = "id", required = true, value = "Person Id", example = "1")
+            @PathVariable("id") Long id) { // este "id" es lo que está entre llaves en el getmapping {id}
+
+        return ResponseEntity.ok(personService.removePersonById(id));
+    }
+
+    @PostMapping(value = "/addPerson")
+    @ApiOperation(
+            value = "Adds a person to the table",
+            httpMethod = "POST",
+            response = PersonResponseDTO.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "Body content with basic information for this Lists Master by Id"
+            ),
+            @ApiResponse(
+                    code = 400,
+                    message = "Describes errors on invalid payload received, e.g: missing fields, invalid data formats, etc.")
+    })
+    public ResponseEntity<PersonResponseDTO> createPerson(@RequestBody PersonDTO personDTO) {
+
+        return ResponseEntity.ok(personService.addPerson(personDTO));
     }
 }
