@@ -1,0 +1,31 @@
+# Acá se hace lo mismo que en el application.properties pero con otra sintaxis
+# Se usa más esta, por tener sintaxis más legible
+
+# jdbc:mysql://localhost:3307/curso_ayi_jpaaa?serverTimezone=America/Santiago
+
+# Se agregan las properties propias del proyecto
+#
+# MS Settings.
+#
+spring:
+  # Datasource settings, se debe agregar la informacion de la base de datos local.
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?currentSchema=${DB_SCHEMA}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    hibernate:
+      ddl-auto: update # Si la encuentra la borra y la crea de nuevo, y si no la encuentra la crea
+      # otras opc: update, con esta opc no va a borrar sino que va ir agregando la nueva info
+
+# Swagger settings.
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /swagger.json
