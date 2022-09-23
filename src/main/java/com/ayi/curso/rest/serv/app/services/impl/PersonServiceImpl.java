@@ -90,20 +90,11 @@ public class PersonServiceImpl implements IPersonService {
 
     @Override
     public PersonResponseDTO addPerson(PersonDTO personDTO) {
-        PersonResponseDTO personResponseDTO;
-
-        PersonEntity entity = new PersonEntity(
-                personDTO.getFirstName(),
-                personDTO.getLastName(),
-                personDTO.getTypeDocument(),
-                personDTO.getNumberDocument(),
-                personDTO.getDateBorn()
-        );
+        PersonEntity entity = personMapper.dtoToEntity(personDTO); // De PersonDTO a PersonEntity
 
         personRepository.save(entity);
 
-        personResponseDTO = personMapper.entityToDto(entity);
-        return personResponseDTO;
+        return personMapper.entityToDto(entity); // De PersonEntity a PersonResponseDTO
     }
 
     @Override
