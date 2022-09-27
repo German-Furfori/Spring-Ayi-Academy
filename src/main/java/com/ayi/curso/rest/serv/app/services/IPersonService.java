@@ -2,6 +2,7 @@ package com.ayi.curso.rest.serv.app.services;
 
 import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
+import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTOFull;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,4 +18,8 @@ public interface IPersonService {
     PersonResponseDTO addPerson(PersonDTO personDTO);
 
     PersonResponseDTO removePersonById(Long id);
+
+    PersonResponseDTOFull findAllPersonsForPage(Integer page, Integer size);
+
+    PersonResponseDTO modifyPersonById(Long id, PersonDTO personDTO);
 }

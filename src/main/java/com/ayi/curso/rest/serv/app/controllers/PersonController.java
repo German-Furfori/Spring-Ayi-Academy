@@ -2,16 +2,20 @@ package com.ayi.curso.rest.serv.app.controllers;
 
 import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
+import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTOFull;
 import com.ayi.curso.rest.serv.app.services.IPersonService;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @Api(value = "Person API", tags = {"Persons Service"}) // Le decimos a Swagger que hay una transacción nueva, y que se llama Person Service (Es lo que se ve en grande en el Swagger)
@@ -145,6 +149,69 @@ public class PersonController { // La puerta de entrada al endpoint
     })
     public ResponseEntity<PersonResponseDTO> createPerson(@RequestBody PersonDTO personDTO) {
 
-        return ResponseEntity.ok(personService.addPerson(personDTO));
+        return ResponseEntity.ok(personService.addPerson(personDTO)); // return new ResponseEntity<>(personService.addPerson(person),HttpStatus.CREATED);
+    }
+
+    @GetMapping(value = "/getAllPersons/{page}/{size}") // Paginación (página y cantidad de registros a mostrar)
+    @ApiOperation(
+            value = "Retrieves all Lists Persons",
+            httpMethod = "GET",
+            response = PersonResponseDTO[].class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,
+                    message = "Body content with basic information about persons",
+                    response = PersonResponseDTO[].class),
+            @ApiResponse(
+                    code = 400,
+                    message = "Describes errors on invalid payload received, e.g: missing fields, invalid data formats, etc.")
+    })
+    public ResponseEntity<?> getAllPersonsForPage( // El ? quiere decir que puede ser cualquier cosa
+            @ApiParam(value = "page to display", required = true, example = "1")
+            @PathVariable(name = "page") Integer page,
+            @ApiParam(value = "number of items per request", required = true, example = "1")
+            @PathVariable(name = "size") Integer size) {
+
+        PersonResponseDTOFull personResponseDTOFull;
+        Map<String, Object> response = new HashMap<>(); // HashTable de C#, lo uso por si no encuentra nada en el request
+
+        personResponseDTOFull = personService.findAllPersonsForPage(page, size);
+
+        if(personResponseDTOFull == null) { // Si no encontró nada
+            response.put("Message", "No se encontró información de Personas en el sistema");
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND); // NOT FOUND (404), no lo encontró.
+        }
+
+        // Si llego acá, entonces encontró algo
+        return new ResponseEntity<>(personResponseDTOFull, HttpStatus.OK); // OK (200)
+
+    }
+
+    @PutMapping(value = "/updatePersonById/{id}")
+    @ApiOperation(
+            value = "Updates a person to the table",
+            httpMethod = "PUT",
+            response = PersonResponseDTO.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 201,
+                    message = "Information created"
+            )
+    })
+    public ResponseEntity<?> updatePersonById(
+            @ApiParam(value = "person ID", required = true, example = "1")
+            @PathVariable(name = "id") Long id,
+            @RequestBody PersonDTO personDTO) {
+
+        PersonResponseDTO personResponseDTO = personService.modifyPersonById(id, personDTO);
+        Map<String, Object> response = new HashMap<>();
+
+        if(personResponseDTO == null) { // Si no encontró nada
+            response.put("Message", "No se encontró el ID a modificar");
+            return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND); // NOT FOUND (404), no lo encontró.
+        }
+
+        return new ResponseEntity<>(personResponseDTO, HttpStatus.CREATED); // CREATED (201)
     }
 }

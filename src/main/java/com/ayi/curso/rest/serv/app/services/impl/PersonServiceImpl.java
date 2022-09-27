@@ -2,6 +2,7 @@ package com.ayi.curso.rest.serv.app.services.impl;
 
 import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
+import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTOFull;
 import com.ayi.curso.rest.serv.app.entities.PersonEntity;
 import com.ayi.curso.rest.serv.app.mappers.IPersonMapper;
 import com.ayi.curso.rest.serv.app.repositories.IPersonRepository;
@@ -9,8 +10,11 @@ import com.ayi.curso.rest.serv.app.services.IPersonService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -108,6 +112,51 @@ public class PersonServiceImpl implements IPersonService {
             return personResponseDTO;
         } else {
             throw new RuntimeException("No se encuentra el ID a borrar");
+        }
+    }
+
+    @Override
+    public PersonResponseDTOFull findAllPersonsForPage(Integer page, Integer size) { // Paginación
+
+        PersonResponseDTOFull personResponseDTOFull;
+
+        Pageable pageable = PageRequest.of(page, size); // Pageable: Interfaz para información de paginación
+
+        //PageRequest es una clase, que implementa la interfaz Pageable
+        // 	of(int page, int size) Creates a new unsorted PageRequest
+
+        Page<PersonEntity> personEntityPages = personRepository.findAll(pageable); // Findall está sobrecargado, si no le paso nada me busca tdo, si le paso el pageable me busca la página
+
+        if(personEntityPages != null && !personEntityPages.isEmpty()) { // Que no sea nulo y que contenga páginas
+            personResponseDTOFull = personMapper.listPersonDTOs(personEntityPages.getContent()); // El mapper lo agregué yo, y le paso el objeto Page que tiene el contenido de la página
+            personResponseDTOFull.setSize(personEntityPages.getSize()); // Tamaño de la página
+            personResponseDTOFull.setCurrentPage(personEntityPages.getNumber() + 1); // La página actual, revisar esto (primer página 0 o 1)
+            personResponseDTOFull.setTotalPages(personEntityPages.getTotalPages());
+            personResponseDTOFull.setTotalElements((int) personEntityPages.getTotalElements()); // Me devuelve Long, así que lo parseo
+            return personResponseDTOFull;
+        } else {
+            throw new RuntimeException("Error en el proceso");
+        }
+    }
+
+    @Override
+    public PersonResponseDTO modifyPersonById(Long id, PersonDTO personDTO) {
+        Optional<PersonEntity> entityOptional = personRepository.findById(id);
+        PersonEntity entity = entityOptional.get();
+
+        if(entityOptional.isPresent()) {
+            entity.setFirstName(personDTO.getFirstName());
+            entity.setLastName(personDTO.getLastName());
+            entity.setTypeDocument(personDTO.getTypeDocument());
+            entity.setNumberDocument(personDTO.getNumberDocument());
+            entity.setDateBorn(personDTO.getDateBorn());
+            entity.setDateModified(LocalDate.now());
+
+            personRepository.save(entity);
+
+            return personMapper.entityToDto(entity);
+        } else {
+            throw new RuntimeException("No se encuentra el ID a actualizar");
         }
     }
 }
