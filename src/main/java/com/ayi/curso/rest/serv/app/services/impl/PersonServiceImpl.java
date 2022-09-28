@@ -4,6 +4,8 @@ import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTOFull;
 import com.ayi.curso.rest.serv.app.entities.PersonEntity;
+import com.ayi.curso.rest.serv.app.exceptions.ReadAccessException;
+import com.ayi.curso.rest.serv.app.exceptions.WriteAccessException;
 import com.ayi.curso.rest.serv.app.mappers.IPersonMapper;
 import com.ayi.curso.rest.serv.app.repositories.IPersonRepository;
 import com.ayi.curso.rest.serv.app.services.IPersonService;
@@ -34,13 +36,18 @@ public class PersonServiceImpl implements IPersonService {
     private IPersonMapper personMapper; // Acá uso los mapper (me transforma una entidad a otra)
 
     @Override
-    public List<PersonResponseDTO> findAllPersons() { // Me devuelve todas las personas de la tabla
+    public List<PersonResponseDTO> findAllPersons() throws ReadAccessException { // Me devuelve todas las personas de la tabla, y manejo la excepción con ReadAccesException
 
         List<PersonResponseDTO> personResponseDTOs;
 
         List<PersonEntity> personEntities = personRepository.findAll();
 
-        personResponseDTOs = personEntities.stream()
+        if (personEntities == null || personEntities.size() == 0) {
+            throw new ReadAccessException("No existen registros en el sistema"); // Tengo que firmar mi método para poder usar Exceptions
+            // Esto es una excepción controlada. Si fuese una RunTimeExcetion no sería controlada, me devuelve un quilombo de líneas de error
+        }
+
+        personResponseDTOs = personEntities.stream() // Si encuentra info sigue por acá
                 .map(lt -> new PersonResponseDTO(
                         lt.getIdPerson(),
                         lt.getFirstName(),
@@ -57,17 +64,19 @@ public class PersonServiceImpl implements IPersonService {
     }
 
     @Override
-    public PersonResponseDTO findPersonById(Long idPerson) {
-        PersonResponseDTO personResponseDTO;
+    public PersonResponseDTO findPersonById(Long idPerson) throws ReadAccessException {
+
+        if (idPerson == null || idPerson <= 0) {
+            throw new ReadAccessException("Error, el valor del id es nulo o vacío");
+        }
 
         Optional<PersonEntity> entity = personRepository.findById(idPerson); // Ya tengo todos los métodos para buscar, deletear, etc
 
         if (!entity.isPresent()) {
-            throw new RuntimeException("Error no existe el id de persona buscado");
+            throw new WriteAccessException("Error, no existe el id de persona buscado");
         }
 
-        personResponseDTO = personMapper.entityToDto(entity.get());
-        return personResponseDTO;
+        return personMapper.entityToDto(entity.get()); // Retorna un PersonResponseDTO
     }
 
     @Override // Este lo hice yo, ver después si funciona. Funciona, muestra una lista vacía si no encuentra nada

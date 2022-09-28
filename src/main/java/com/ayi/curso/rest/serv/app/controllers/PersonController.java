@@ -3,6 +3,7 @@ package com.ayi.curso.rest.serv.app.controllers;
 import com.ayi.curso.rest.serv.app.dto.request.persons.PersonDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTO;
 import com.ayi.curso.rest.serv.app.dto.response.persons.PersonResponseDTOFull;
+import com.ayi.curso.rest.serv.app.exceptions.ReadAccessException;
 import com.ayi.curso.rest.serv.app.services.IPersonService;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;
@@ -46,10 +47,23 @@ public class PersonController { // La puerta de entrada al endpoint
                     code = 400, // Hubo algún error
                     message = "Describes errors on invalid payload received, e.g: missing fields, invalid data formats, etc.")
     }) // Documento tdo mi Swagger
-    public ResponseEntity<List<PersonResponseDTO>> getAllPersons() { // Antes solo devolvíamos la lista de PersonResponseDTO, ahora vamos a guardar esa lista en un ResponseEntity
+    public ResponseEntity<?> getAllPersons() {
         // Ésta es una estructura que nos permite intercambiar contenido a nivel de HTTP (cabeceras, body, los errores, tdo lo que tenga que ver con la respuesta de nuestro servicio)
 
-        List<PersonResponseDTO> personResponseDTOs = personService.findAllPersons();
+        List<PersonResponseDTO> personResponseDTOs;
+        Map<String, Object> response = new HashMap<>(); // Creo un response, que voy a devolver
+
+        // Acá también me exige que añada la firma para la excepción, así que o puedo poner el extends más arriba o directamente handlearla con un try catch
+        // Agregué el Map también para el response
+
+        try {
+            personResponseDTOs = personService.findAllPersons();
+        } catch (ReadAccessException e) {
+            response.put("Código de error: ", 1001); // Agrego otro valor al array asociativo
+            response.put("Mensaje de error: ", e.getMessage()); // Capturo el mensaje de error
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
         return ResponseEntity.ok(personResponseDTOs); // ResponseEntity.[ver métodos]
 
     }
@@ -72,12 +86,23 @@ public class PersonController { // La puerta de entrada al endpoint
                     code = 400,
                     message = "Describes errors on invalid payload received, e.g: missing fields, invalid data formats, etc.")
     })
-    public ResponseEntity<PersonResponseDTO> getPersonById(
+    public ResponseEntity<?> getPersonById(
             @ApiParam(name = "id", required = true, value = "Person Id", example = "1")
             @PathVariable("id") Long id) { // este "id" es lo que está entre llaves en el getmapping {id}
 
-        return ResponseEntity.ok(personService.findPersonById(id));
+        Map<String, Object> response = new HashMap<>();
 
+        PersonResponseDTO personResponseDTO;
+
+        try {
+            personResponseDTO = personService.findPersonById(id);
+        } catch (ReadAccessException e) {
+            response.put("Código de error: ", 1002);
+            response.put("Mensaje de error: ", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND); // NOT_FOUND porque no lo encontró o es nulo
+        }
+
+        return ResponseEntity.ok(personResponseDTO);
     }
 
     @GetMapping( // Ver si anda
